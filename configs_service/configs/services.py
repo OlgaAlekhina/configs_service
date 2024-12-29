@@ -1,6 +1,11 @@
 from typing import Optional, List, Dict
 import requests
+from django.conf import settings
 from requests import HTTPError, RequestException
+
+
+registry_url = settings.REGISTRY_URL
+registry_port = settings.REGISTRY_PORT
 
 
 def get_configs(project_id: str, account_id: Optional[str], configs: List[str]) -> Optional[Dict]:
@@ -8,11 +13,11 @@ def get_configs(project_id: str, account_id: Optional[str], configs: List[str]) 
     Получить из реестра значения конфигов типа config для данных project_id и account_id
     """
     object_types = ','.join(configs)
-    beginning_url = "http://127.0.0.1:8002/api/configs"
+    base_url = f"{registry_url}:{registry_port}/api/configs"
     if account_id:
-        url = f"{beginning_url}/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
+        url = f"{base_url}/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
     else:
-        url = f"{beginning_url}/?project_id={project_id}&object_type={object_types}"
+        url = f"{base_url}/?project_id={project_id}&object_type={object_types}"
     response = requests.get(url)
     if response.status_code == 200:
         response_data = response.json()
@@ -26,7 +31,7 @@ def get_configs(project_id: str, account_id: Optional[str], configs: List[str]) 
 
 
 def create_config(config_data):
-    url = "http://127.0.0.1:8002/api/config/"
+    url = f"{registry_url}:{registry_port}/api/config/"
     try:
         response = requests.post(url, json=config_data)
         response.raise_for_status()

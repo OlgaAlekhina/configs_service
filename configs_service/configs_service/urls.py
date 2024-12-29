@@ -24,4 +24,5 @@ urlpatterns = [
     path('', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
     path('docs/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(), name='schema-swagger-ui'),
+    path('', include('configs.urls')),
 ]

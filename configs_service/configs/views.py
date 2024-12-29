@@ -3,7 +3,8 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema, OpenApiParamet
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import ErrorResponseSerializer, HeadersSerializer, CreateConfigSerializer
+from .serializers import ErrorResponseSerializer, HeadersSerializer, CreateConfigSerializer, DetailSerializer, \
+    CreateConfigResponseSerializer
 from .services import get_configs, create_config
 
 
@@ -34,11 +35,12 @@ class BaseContestView(APIView):
     }
 
 
-class ConfigTypeView(BaseContestView):
+class GetConfigView(BaseContestView):
     # permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
         summary="Получение идентификаторов типа {config_type} из реестра",
-        description="Получение идентификаторов типа {config_type} из реестра",
+        description="""Получение идентификаторов типа {config_type} из реестра. Можно запросить несколько типов конфигов через 
+                    запятую без пробела. Все существующие типы конфигов можно посмотреть в методе GET /configs.""",
         parameters=[
             OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
             OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
@@ -46,7 +48,7 @@ class ConfigTypeView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
+                response=inline_serializer(name='Config', fields={'detail': DetailSerializer(), 'data': serializers.JSONField()})
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -62,14 +64,17 @@ class ConfigTypeView(BaseContestView):
         if not response_data.get('data'):
             return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
                             status=status.HTTP_404_NOT_FOUND)
-        return Response(response_data)
+        response = {'detail': dict(code='OK', message=f'Данные по конфигам типа {config_type}.')}
+        response.update(response_data)
+        return Response(response)
 
 
 class ConfigsView(BaseContestView):
     # permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
+        operation_id='get_all_configs', # чтобы убрать 'Warning: operationId  has collisions. resolving with numeral suffixes.'
         summary="Получение всех идентификаторов из реестра",
-        description="Получение всех идентификаторов из реестра",
+        description="Получение всех идентификаторов для данных Project-ID и Account-ID.",
         parameters=[
             OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
             OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
@@ -77,7 +82,7 @@ class ConfigsView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
+                response=inline_serializer(name='Configs', fields={'detail': DetailSerializer(), 'data': serializers.JSONField()})
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -93,23 +98,34 @@ class ConfigsView(BaseContestView):
         if not response_data.get('data'):
             return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
                             status=status.HTTP_404_NOT_FOUND)
-        return Response(response_data)
+        response = {'detail': dict(code='OK', message='Данные по конфигам для данных Project-ID и Account-ID.')}
+        response.update(response_data)
+        return Response(response)
 
 
     @extend_schema(
         summary="Добавление идентификаторов в реестр",
         description="Добавление идентификаторов в реестр",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         request=CreateConfigSerializer,
         responses={
             201: OpenApiResponse(
                 description="Successful Response",
-                # response=
+                response=inline_serializer(name='CreateConfigs', fields={'detail': DetailSerializer(), 'data': CreateConfigResponseSerializer()})
             ),
             **BaseContestView.COMMON_RESPONSES
         },
         tags=['Configs']
     )
     def post(self, request):
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         request_data = request.data
         serializer = CreateConfigSerializer(data=request_data)
         if serializer.is_valid():

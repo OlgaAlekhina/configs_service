@@ -33,7 +33,7 @@ def create_config(config_data):
         response_data = response.json()
         result_data = {"detail": {
             "code": "OK",
-            "message": "Идентификатор успешно создан."
+            "message": "Конфиги добавлены в реестр."
         },
             "data": response_data
         }

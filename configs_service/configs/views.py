@@ -98,7 +98,7 @@ class ConfigsView(BaseContestView):
         if not response_data.get('data'):
             return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
                             status=status.HTTP_404_NOT_FOUND)
-        response = {'detail': dict(code='OK', message='Данные по конфигам для данных Project-ID и Account-ID.')}
+        response = {'detail': dict(code='OK', message='Получены все конфиги для данных Project-ID и Account-ID.')}
         response.update(response_data)
         return Response(response)
 

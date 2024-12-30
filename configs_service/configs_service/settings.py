@@ -33,6 +33,9 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 REGISTRY_URL = os.getenv('REGISTRY_URL')
 REGISTRY_PORT = os.getenv('REGISTRY_PORT')
 
+ACCESS_TOKEN_PUBLIC_KEY = os.getenv('ACCESS_TOKEN_PUBLIC_KEY')
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -132,6 +135,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+            'configs.authentication.JWTAuthentication',
+        ],
+    'DEFAULT_PERMISSION_CLASSES': [
+            'rest_framework.permissions.IsAuthenticated',
+        ]
 }
 
 SPECTACULAR_SETTINGS = {

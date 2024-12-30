@@ -1,3 +1,4 @@
 Django==5.1.4
 drf-spectacular==0.28.0
+PyJWT[crypto]==2.9.0
 python-dotenv==1.0.1

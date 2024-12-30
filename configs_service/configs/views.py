@@ -136,11 +136,9 @@ class ConfigsView(BaseContestView):
             config_data = {
                 "project_id": str(project_id),
                 "account_id": str(account_id) if account_id else None,
-                # "user_id": request.auth.get('user_id'),
+                "user_id": request.auth.get('user_id'),
                 "object_type": object_type,
                 "object_code": f"{project_id}:{account_id}:{object_type}",
-                # "object_item": serializer.validated_data['object_item'],
-                # "name": serializer.validated_data['name'],
                 "data": data
             }
             response_data = create_config(config_data)

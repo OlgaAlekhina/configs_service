@@ -20,9 +20,9 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.views.generic.base import RedirectView
 
 urlpatterns = [
-    path('configs_service/admin/', admin.site.urls),
-    path('configs_service/', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
-    path('configs_service/docs/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('configs_service/docs/', SpectacularSwaggerView.as_view(), name='schema-swagger-ui'),
-    path('configs_service/', include('configs.urls')),
+    path('admin/', admin.site.urls),
+    path('', RedirectView.as_view(pattern_name='schema-swagger-ui', permanent=True)),
+    path('docs/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('docs/', SpectacularSwaggerView.as_view(), name='schema-swagger-ui'),
+    path('', include('configs.urls')),
 ]

@@ -1,6 +1,6 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema, OpenApiParameter, inline_serializer
-from rest_framework import permissions, serializers, status
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import ErrorResponseSerializer, HeadersSerializer, CreateConfigSerializer, DetailSerializer, \
@@ -36,7 +36,7 @@ class BaseContestView(APIView):
 
 
 class GetConfigView(BaseContestView):
-    # permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         summary="Получение идентификаторов типа {config_type} из реестра",
         description="""Получение идентификаторов типа {config_type} из реестра. Можно запросить несколько типов конфигов через 
@@ -57,10 +57,15 @@ class GetConfigView(BaseContestView):
     def get(self, request, config_type):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем конфиги из реестра
         response_data = get_configs(project_id=project_id, account_id=account_id, configs=[config_type])
+        if response_data[1] > 200:
+            return Response({'detail': response_data[0]}, status=response_data[1])
+        response_data = response_data[0]
         if not response_data.get('data'):
             return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
                             status=status.HTTP_404_NOT_FOUND)
@@ -70,7 +75,7 @@ class GetConfigView(BaseContestView):
 
 
 class ConfigsView(BaseContestView):
-    # permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         operation_id='get_all_configs', # чтобы убрать 'Warning: operationId  has collisions. resolving with numeral suffixes.'
         summary="Получение всех идентификаторов из реестра",
@@ -91,10 +96,15 @@ class ConfigsView(BaseContestView):
     def get(self, request):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем конфиги из реестра
         response_data = get_configs(project_id=project_id, account_id=account_id, configs=[])
+        if response_data[1] > 200:
+            return Response({'detail': response_data[0]}, status=response_data[1])
+        response_data = response_data[0]
         if not response_data.get('data'):
             return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
                             status=status.HTTP_404_NOT_FOUND)
@@ -123,9 +133,11 @@ class ConfigsView(BaseContestView):
     def post(self, request):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем данные из запроса и валидируем их
         request_data = request.data
         serializer = CreateConfigSerializer(data=request_data)
         if serializer.is_valid():
@@ -141,8 +153,14 @@ class ConfigsView(BaseContestView):
                 "object_code": f"{project_id}:{account_id}:{object_type}",
                 "data": data
             }
+            # создаем новую запись в реестре конфигов
             response_data = create_config(config_data)
             return Response(response_data[0], response_data[1])
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response = {'detail': {
+                "code": "BAD_REQUEST",
+                "message": serializer.errors
+            }}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
 

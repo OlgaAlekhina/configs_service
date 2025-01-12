@@ -25,24 +25,14 @@ class CreateConfigResponseSerializer(serializers.Serializer):
     data = serializers.JSONField()
 
 
-class ErrorDetailSerializer(serializers.Serializer):
+class DetailSerializer(serializers.Serializer):
     code = serializers.CharField()
-    message = serializers.CharField(required=True)
+    message = serializers.CharField()
 
 
 class ErrorResponseSerializer(serializers.Serializer):
     """ Сериализатор для общего ответа об ошибке """
-    detail = ErrorDetailSerializer()
-
-
-class DetailSerializer(serializers.Serializer):
-    code = serializers.CharField(required=True)
-    message = serializers.CharField(required=True)
-
-
-class InfoSerializer(serializers.Serializer):
-    api_version = serializers.CharField(required=True)
-    count = serializers.IntegerField()
+    detail = DetailSerializer()
 
 
 class HeadersSerializer(serializers.Serializer):

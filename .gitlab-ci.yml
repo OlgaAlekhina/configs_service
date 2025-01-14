@@ -14,7 +14,7 @@ build_image:
  before_script:
   - echo "$CI_DEPLOY_PASSWORD" | docker login $REGISTRY_URL -u $CI_DEPLOY_USER --password-stdin
  script:
-  - docker build -t $REGISTRY_URL/REPOSITORY_PATH/$IMAGE .
-  - docker push $REGISTRY_URL/REPOSITORY_PATH/$IMAGE
+  - docker build -t $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE .
+  - docker push $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE
  rules:
   - if: $CI_COMMIT_BRANCH == "master"
